@@ -11,11 +11,11 @@ def isfloatortuple(txt):
         try:
             float(txt.strip())
             return True
-        except ValueError, ve:
+        except ValueError as ve:
             return False
 
 def generate_template(param_file):
-    f = file(param_file,'r')
+    f = open(param_file,'r')
     result = ''
     for l in f:
         if '=' in l and l[0] == ' ':
@@ -35,7 +35,7 @@ def generate_template(param_file):
 
 def generate_paramfile(params, param_file):
     content = generate_template(param_file)
-    print content
+    print (content)
     content = content.format(**params)
     return content
 
@@ -48,15 +48,15 @@ def update_param_file(paramfile, newvalues = {}):
     backupdir = 'backup'
 
     w,v = {},{}
-    execfile(paramfile,w,v)
+    exec(open(paramfile).read(), w,v)
     v.update(newvalues)
     content = generate_paramfile(v, paramfile)
-    print content
+    print (content)
 
-    print 'Write parameters in file',repr(paramfile)
+    print ('Write parameters in file',repr(paramfile))
     if not exists(backupdir) : makedirs (backupdir)
     shutil.copy(paramfile,join(backupdir, paramfile+'-'+datetime.now().strftime('%d-%m-%y_%H-%M-%S')))
-    f = file(paramfile,'w')
+    f = open(paramfile,'w')
     f.write(content)
 
 
@@ -65,7 +65,8 @@ def get_parameters(paramtags, paramfile):
     from defaultparameters import is_defaultparameters_function, get_defaultparameters
 
     w,v = {},{}
-    execfile(paramfile,w,v)
+    exec(open(paramfile).read(), w,v)
+
     if paramtags in v and is_defaultparameters_function(v[paramtags]):
         return get_defaultparameters(v[paramtags])
 

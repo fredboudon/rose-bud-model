@@ -2,6 +2,9 @@ import numpy as np
 from numpy.linalg import norm
 import os
 from targets import *
+import importlib
+from params_generate import *
+
 
 def simu(params, attname, conditions=cross_conditions()):
     from runmodel import runmodel
@@ -25,18 +28,16 @@ def optimize(func, initvalues, bounds = (-np.inf,np.inf)):
 def evalsimu(attname, paramnames, target, conditions):
     target = np.array(target)
     def evaluator(paramvalues):
-        values = simu(dict(zip(paramnames,paramvalues)), attname, conditions)
-        res =  (target - values)/target
-        print paramvalues,':',norm(res)
+        values = simu(dict(list(zip(paramnames,paramvalues))), attname, conditions)
+        res =  (target - values) #/target
+        print(paramvalues,':',norm(res),':') #,res)
         return res
     return evaluator
-
-from params_generate import *
 
 def param_bounds(parameters):
     resultinf = []
     resultsup = []
-    for pname, pvalue in parameters.items():
+    for pname, pvalue in list(parameters.items()):
         if type(pvalue) == tuple:
             assert len(pvalue) == 3
             resultinf.append(min(pvalue[1],pvalue[2]))
@@ -48,7 +49,7 @@ def param_bounds(parameters):
 
 def param_values(parameters):
     result = []
-    for pname, pvalue in parameters.items():
+    for pname, pvalue in list(parameters.items()):
         if type(pvalue) == tuple:
             assert len(pvalue) == 3
             result.append(pvalue[0])
@@ -66,19 +67,19 @@ def get_attempt_dir(tag, paramfile):
     return mdir
 
 def read_attempt(tag, i, paramfile):
-    from cPickle import load        
+    from pickle import load        
     from os.path import exists, join
     f = join(get_attempt_dir(tag, paramfile),str(i)+'.pkl')
     if exists(f):    
-        stream = file(f,'rb')
+        stream = open(f,'rb')
         return load( stream)[1:]
 
 
 def save_attempt(tag, i, val, param, paramfile):
-    from cPickle import dump
+    from pickle import dump
     from os.path import join
     f = join(get_attempt_dir(tag, paramfile),str(i)+'.pkl')
-    stream = file(f,'wb')
+    stream = open(f,'wb')
     dump( (i,val, param), stream)
 
 
@@ -86,7 +87,7 @@ def process(params, saving = True):
     tag, conditions, targets, paramfile, i, paraminit = params
 
     parameters = get_parameters(tag, paramfile)
-    myevalsimu = evalsimu(tag, parameters.keys(), targets, conditions)
+    myevalsimu = evalsimu(tag, list(parameters.keys()), targets, conditions)
 
     val = None
     res = None
@@ -95,10 +96,10 @@ def process(params, saving = True):
 
     if res :
         val, result = res
-        print 'Seed ',i, 'Val', val, 'Params', result
+        print('Seed ',i, 'Val', val, 'Params', result)
         ok = True
     if val is None:
-        print 'Start from', paraminit
+        print('Start from', paraminit)
         result, ok = optimize(myevalsimu, paraminit, param_bounds(parameters))
         result, ok = optimize(myevalsimu, result, param_bounds(parameters))
         val = norm(myevalsimu(result))
@@ -114,26 +115,27 @@ def generate_paraminits(tag, parameters, randomseedenabled, seeds):
     if randomseedenabled:
         from random import uniform, seed
         if reallyrandom:
-            if type(seeds) == int: seeds = xrange(1,seeds)
+            if type(seeds) == int: seeds = range(1,seeds)
             elif 0 in seeds: seeds.remove(0)
             for n in seeds:
                 seed(n)
-                paraminits.append([uniform(pmin,pmax)  for pname, (pvalue, pmin, pmax) in parameters.items()])
+                paraminits.append([uniform(pmin,pmax)  for pname, (pvalue, pmin, pmax) in list(parameters.items())])
         else:
             dim = len(parameters)
             nbvalperparam = ceil(pow(seeds,1./dim))
-            paraminits = list(product(*[np.linspace(pmin,pmax,nbvalperparam) for pname, (pvalue, pmin, pmax) in parameters.items()]))
+            paraminits = list(product(*[np.linspace(pmin,pmax,nbvalperparam) for pname, (pvalue, pmin, pmax) in list(parameters.items())]))
     return paraminits        
 
 def optimize_group(generate, tag, conditions, targets, randomseedenabled = False, seeds = 1000, view = True, parallel = True):
     from runmodel import modelfile, paramfile
-    print seeds
-    print 'Model :',repr(modelfile),'with parameters',repr(paramfile),'on', tag
+    print(seeds)
+    print('Model :',repr(modelfile),'with parameters',repr(paramfile),'on', tag)
     parameters = get_parameters(tag, paramfile)
+    print(parameters)
 
     paraminits = generate_paraminits(tag, parameters, randomseedenabled, seeds)
 
-    initialval = norm(evalsimu(tag, parameters.keys(), targets, conditions)(param_values(parameters)))
+    initialval = norm(evalsimu(tag, list(parameters.keys()), targets, conditions)(param_values(parameters)))
 
     if not randomseedenabled:
         results = []
@@ -148,19 +150,19 @@ def optimize_group(generate, tag, conditions, targets, randomseedenabled = False
     
     bestresult, bestval = min(results, key=lambda x : x[1])
 
-    namedresult = dict(zip(parameters.keys(), bestresult))
+    namedresult = dict(list(zip(list(parameters.keys()), bestresult)))
 
-    import diagram ; reload(diagram)
+    import diagram ; importlib.reload(diagram)
 
     improvement = abs(initialval - bestval) > 1e-5
     if improvement :
-        print 'Improve solution : ', initialval, ' --> ', bestval
-        if view : diagram.generate_fig(tag, targetvalues = targets, conditions = conditions, values = namedresult)
+        print('Improve solution : ', initialval, ' --> ', bestval)
+        if view : diagram.generate_fig_optim(tag, targetvalues = targets, conditions = conditions, values = namedresult)
         if generate: 
             update_param_file(paramfile, namedresult)
     else:
-        print 'No improvement found'
-        if view : diagram.generate_fig(tag, targetvalues = targets, conditions = conditions)
+        print('No improvement found')
+        if view : diagram.generate_fig_optim(tag, targetvalues = targets, conditions = conditions)
 
 
 ######  CK #########
@@ -197,12 +199,12 @@ def read_attempts(tag):
     from runmodel import modelfile, paramfile
     from os.path import exists, join, splitext
     import glob
-    print 'Model :',repr(modelfile),'with parameters',repr(paramfile),'on', tag
+    print('Model :',repr(modelfile),'with parameters',repr(paramfile),'on', tag)
     parameters = get_parameters(tag, paramfile)
     mdir = get_attempt_dir(tag, paramfile)
     files = glob.glob(join(mdir,'*.pkl'))
     files = [splitext(f[len(mdir)+1:])[0] for f in files]
-    seeds = map(int, files)
+    seeds = list(map(int, files))
     seeds.sort()
 
     paraminits = generate_paraminits(tag, parameters, True, seeds)
@@ -219,7 +221,7 @@ def filter_attempts(tag, parameters, params, values, seeds):
         params = [params[i] for i in filtering]
         values = [values[i] for i in filtering]
         seeds = [seeds[i] for i in filtering]
-        print 'Remove',nbvalues - len(values),'values'
+        print('Remove',nbvalues - len(values),'values')
     return parameters, params, values, seeds
 
 def estimate_volumes_CK(): estimate_volumes('CK')
@@ -230,15 +232,15 @@ def estimate_variability(tag):
     parameters, params, values, seeds = read_attempts(tag)
     parameters, params, values, seeds = filter_attempts(tag, parameters, params, values, seeds)
     output = file('optimalsolution.csv','w')
-    output.write('\t'.join(parameters.keys())+'\t\t\Error\n')
+    output.write('\t'.join(list(parameters.keys()))+'\t\t\Error\n')
     for p,v in zip(params, values):
         output.write('\t'.join(map(str,p))+'\t:\t'+str(v)+'\n')
 
     params = np.array(params)
-    for i in xrange(len(parameters.keys())):
-        print parameters.keys()[i] + '\t'+str(np.mean(params[:,i]))+' +- '+str(np.std(params[:,i]))+'\t'
-    print 
-    print 'Error:', str(np.mean(values))+' +- '+str(np.std(values))+'  '+str(min(values))+'  '+str(max(values))
+    for i in range(len(list(parameters.keys()))):
+        print(list(parameters.keys())[i] + '\t'+str(np.mean(params[:,i]))+' +- '+str(np.std(params[:,i]))+'\t')
+    print() 
+    print('Error:', str(np.mean(values))+' +- '+str(np.std(values))+'  '+str(min(values))+'  '+str(max(values)))
     plot_variability(tag)
 
 
@@ -264,14 +266,14 @@ def plot_variability(tag):
 #########  MAIN ########
 
 def print_help():
-    print 'help of script optimize.py'
-    print '-h : this help'
-    print '-m : set the model to optimize'
-    print '-r : with random seed'
-    print '-v : characterize random seed'
-    print '-w : characterize variability of random seed'
-    print 'CK,SL,I,ALL : optimize the parameters of the specified compound'
-    print 'default : optimize I with all conditions (including burst delay inference)'
+    print('help of script optimize.py')
+    print('-h : this help')
+    print('-m : set the model to optimize')
+    print('-r : with random seed')
+    print('-v : characterize random seed')
+    print('-w : characterize variability of random seed')
+    print('CK,SL,I,ALL : optimize the parameters of the specified compound')
+    print('default : optimize I with all conditions (including burst delay inference)')
 
 def main_optimize():
     #estimate_volumes_CK()
@@ -295,7 +297,7 @@ def main_optimize():
         done = False
         while  i < len(sys.argv) and not done:
             current = sys.argv[i].upper()
-            print current
+            print(current)
             if current == '-H':
                 print_help()
             elif current == '-M':
@@ -315,7 +317,7 @@ def main_optimize():
                 targetfunc(current)()
                 done = True
             else:
-                print 'Unknow option : ', sys.argv[i]
+                print('Unknow option : ', sys.argv[i])
                 print_help()
                 done = True
             i += 1

@@ -2,7 +2,9 @@ import matplotlib
 #matplotlib.use('Qt4Agg')
 import numpy as np
 import matplotlib.pyplot as plt
-from runmodel import runmodel
+import importlib
+import runmodel as rml
+#importlib.reload(rml)
 from targets import *
 from model_general import burst_delay_law, I_threshold
 import targets as tg
@@ -21,13 +23,13 @@ def generate_fig(title, targetvalues = None, conditions = None, values = None):
         Simus = []
         ax = plt.gca()
 
-        print "Auxin\tSugar\tGR24\tBAP\t:\t"+title
+        print("Auxin\tSugar\tGR24\tBAP\t:\t"+title)
         for auxin in auxinvalues:
             Simus.append(list())
             for sugar in sugarvalues:
-                resvalues = runmodel(auxin, sugar, gr24 = 0, bap = 0, values = values)
+                resvalues = rml.runmodel(auxin, sugar, gr24 = 0, bap = 0, values = values)
                 Simus[-1].append(resvalues[title])
-                print auxin, '\t', sugar, '\t', 0, '\t', 0, '\t', ':', '\t', resvalues[title]
+                print(auxin, '\t', sugar, '\t', 0, '\t', 0, '\t', ':', '\t', resvalues[title])
 
 
         rects1 = ax.bar(ind, Simus[0], width, color=[0.2,0.2,0.2])
@@ -37,23 +39,23 @@ def generate_fig(title, targetvalues = None, conditions = None, values = None):
 
         i = 0
         for auxin, sugar, gr24, bap in  bapconditions:
-                resvalues = runmodel(auxin, sugar, gr24, bap, values)
+                resvalues = rml.runmodel(auxin, sugar, gr24, bap, values)
                 resvalue  =  resvalues[title]
                 color = 0.2 + 0.6 * auxin / 2.5
                 rectsi = ax.bar([len(sugarvalues)+width*i], [resvalue], width, color=[color,color,color])
                 i += 1
-                print auxin,'\t',  sugar, '\t',  gr24, '\t', bap, '\t', ':', '\t', resvalues[title]
+                print(auxin,'\t',  sugar, '\t',  gr24, '\t', bap, '\t', ':', '\t', resvalues[title])
 
 
         i = 0
         for auxin, sugar, gr24, bap in  gr24conditions:
-                resvalues = runmodel(auxin, sugar, gr24, bap, values)
+                resvalues = rml.runmodel(auxin, sugar, gr24, bap, values)
                 resvalue  =  resvalues[title]
                 #print resvalue
                 color = 0.2 + 0.6 * auxin / 2.5
                 rectsi = ax.bar([len(sugarvalues)+1+width*i], [resvalue], width, color=[color,color,color])
                 i += 1
-                print auxin, '\t', sugar, '\t', gr24, '\t', bap, '\t', ':', '\t', resvalues[title]
+                print(auxin, '\t', sugar, '\t', gr24, '\t', bap, '\t', ':', '\t', resvalues[title])
                
                
 
@@ -103,6 +105,67 @@ def generate_fig(title, targetvalues = None, conditions = None, values = None):
         myplot()
         plt.subplot(212)
         myplot( values)
+
+
+    plt.show()
+
+
+def generate_fig_optim(title, targetvalues = None, conditions = None, values = None):
+
+    auxinvalues = []
+    sugarvalues = []
+    bapvalues   = []
+    gr24values  = []
+
+    for a,s,b,g in conditions:
+        auxinvalues.append(a)
+        sugarvalues.append(s)
+        bapvalues.append(b)
+        gr24values.append(g)
+
+    xlabel = lambda auxin,sugar,g,b : '%.2f\n%.2f\n%.2f\n%.2f' % (auxin,sugar,g,b)
+    nobap = np.count_nonzero(bapvalues) == 0
+    nogr24 = np.count_nonzero(gr24values) == 0
+    if nogr24:
+        if nobap : 
+            xlabel = lambda auxin,sugar,g,b : '%.2f\n%.2f' % (auxin,sugar)
+        else:
+            xlabel = lambda auxin,sugar,g,b : '%.2f\n%.2f\n%.2f' % (auxin,sugar,g)
+
+
+    width = 0.2       # the width of the bars
+    ind = np.arange(len(sugarvalues))  # the x locations for the groups
+    
+    print(values)
+
+    def myplot( values = None):
+        Simus = []
+        ax = plt.gca()
+
+        print("Auxin\tSugar\tGR24\tBAP\t:\t"+title)
+        Simus = []
+        for auxin,sugar,g,b in conditions:
+            resvalues = rml.runmodel(auxin, sugar, gr24 = g, bap = b, values = values)
+            Simus.append(resvalues[title])
+            print(auxin, '\t', sugar, '\t', g, '\t', b, '\t', ':', '\t', resvalues[title])
+
+
+        rects1 = ax.bar(ind, Simus, width, color=[0.2,0.2,0.2])
+        ax.plot(ind,targetvalues,'ro',color=[0,1,0], label = 'Target')
+
+        # add some text for labels, title and axes ticks
+        ax.set_ylabel(title)
+        ax.set_title(title)
+        ax.set_xticks(np.arange(len(sugarvalues)+1))
+        ax.set_xticklabels( [xlabel(auxin,sugar,g,b) for auxin,sugar,g,b in conditions]+['A\nS\nG\nB'] )
+
+
+    if values is None  :   
+        fig, ax = plt.subplots()
+        myplot()
+    else:
+        #fig, axes = plt.subplots(1, 2)
+        myplot()
 
 
     plt.show()
@@ -158,16 +221,16 @@ def generate_fig_compounds(paramset = ['SL','CK', 'CKRESPONSE', 'SLRESPONSE', 'I
         for pname in paramset:
             targetcontents[pname].append(list())
         for sugar in sugarcontents:
-            resvalues = runmodel(auxin, sugar)
+            resvalues = rml.runmodel(auxin, sugar)
             for pname in paramset:
-                if func.has_key(pname) : getval = func[pname]
+                if pname in func : getval = func[pname]
                 else : getval = lambda r :  r[pname]
                 targetcontents[pname][-1].append(getval(resvalues))
 
     #print 'Simulation:',targetcontents
 
     dc = 0.8/(M-1)
-    colors = [0.9]+[0.9-i*dc for i in xrange(1,M-1)]+[0.1]
+    colors = [0.9]+[0.9-i*dc for i in range(1,M-1)]+[0.1]
     nbparam = len(paramset)
 
     from math import sqrt
@@ -199,7 +262,7 @@ def generate_fig_compounds(paramset = ['SL','CK', 'CKRESPONSE', 'SLRESPONSE', 'I
                     ax.plot(tind,tval,'ro',color=tcolors[i], label = 'Target')
                     i += 1
 
-        elif targets.has_key(pname):
+        elif pname in targets:
             if type(targets[pname]) == dict:
                 tval, tcond = targets[pname]
                 tind = [ (auxincontents.index(aux) + 0.5) * width +  sugarcontents.index(sug) for aux,sug,gr24,bap in tcond ]
@@ -237,27 +300,27 @@ def fig_I():
 def fig_ALL():  generate_fig_compounds()
 
 def print_values(auxinvalues, sugarvalues, gr24values, bapvalues):
-    print "Auxin\tSugar\tGR24\tBAP\t:",
+    print("Auxin\tSugar\tGR24\tBAP\t:", end=' ')
     init = True
 
 
     for auxin, sugar, gr24, bap in  cross_conditions(auxinvalues, sugarvalues, gr24values, bapvalues):
         resvalues = runmodel(auxin, sugar, gr24 = gr24, bap = bap)
         if init:
-            print '\t'.join(resvalues.keys()),'\tBurst Delay'
+            print('\t'.join(list(resvalues.keys())),'\tBurst Delay')
             init = False
-        print auxin, '\t', sugar, '\t', gr24, '\t', bap, '\t', ':', '\t'.join(map(str,resvalues.values())),'\t',burst_delay_law(resvalues['I'])
+        print(auxin, '\t', sugar, '\t', gr24, '\t', bap, '\t', ':', '\t'.join(map(str,list(resvalues.values()))),'\t',burst_delay_law(resvalues['I']))
 
 
 
 
 def print_help():
-    print 'help of script diagram.py'
-    print '-h : this help'
-    print '-t : print a table of resulting values of simulations for different conditions'
-    print '-m : set the model to plot'
-    print 'ck,sl,I,ALL : plot the values of the specified compound'
-    print 'default : plot a composed diagram of the different compounds'
+    print('help of script diagram.py')
+    print('-h : this help')
+    print('-t : print a table of resulting values of simulations for different conditions')
+    print('-m : set the model to plot')
+    print('ck,sl,I,ALL : plot the values of the specified compound')
+    print('default : plot a composed diagram of the different compounds')
 
 from numpy import arange
 
@@ -284,7 +347,7 @@ def main():
                 globals()[func]()
                 shouldplot = False
             else:
-                print 'Unknow option : ', sys.argv[i]
+                print('Unknow option : ', sys.argv[i])
                 print_help()
             i += 1
             if shouldplot:

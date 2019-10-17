@@ -1,11 +1,12 @@
 
 def get_param_file(modelfile):
     lnamespace = {}
-    execfile(modelfile, lnamespace)
+    exec(open(modelfile).read(), lnamespace)
     paramfile = lnamespace['paramfile']
     return paramfile
 
-modelfile = 'model-paper.py'
+#modelfile = 'model-anne.py'
+modelfile = 'model_paper.py'
 paramfile = get_param_file(modelfile)
 
 
@@ -20,7 +21,7 @@ def runmodel(auxin, sugar, gr24 = 0, bap = 0, values = None):
     if not values is None : namespace.update(values)
 
     # Execution of the model
-    execfile(modelfile, namespace)
+    exec(open(modelfile).read(), namespace)
     eval_model = namespace['eval_model']
     sl, ck, ckresponse, slresponse, I = eval_model(auxin, sugar, gr24, bap)
 

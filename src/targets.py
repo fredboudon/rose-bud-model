@@ -48,7 +48,7 @@ interpolateddurations = [[None ,  None, None, None],
                          [54, 15.5, None, None]]
 
 
-completedurations =  [[measureddurations[i][j] if not measureddurations[i][j] is None else interpolateddurations[i][j] for j in xrange(len(measureddurations[i])) ] for i in xrange(len(measureddurations)) ]
+completedurations =  [[measureddurations[i][j] if not measureddurations[i][j] is None else interpolateddurations[i][j] for j in range(len(measureddurations[i])) ] for i in range(len(measureddurations)) ]
 
 
 from model_general import I_law
@@ -108,15 +108,15 @@ def estimate_I_duration_law():
                 measureddelay.append(delays[cond])
                 measuredI.append(Itargets[i])
 
-    print measureddelay
-    print measuredI
-    print consideredcond
+    print(measureddelay)
+    print(measuredI)
+    print(consideredcond)
 
     from scipy.stats import linregress
 
     slope, intercept, r_value, p_value, std_err = linregress(measuredI, measureddelay)
-    print 'slope', slope
-    print 'intercept', intercept
+    print('slope', slope)
+    print('intercept', intercept)
 
     x = np.array(measuredI)
     plt.plot(measuredI, measureddelay, 'ro',color=(1,0,0))
@@ -134,10 +134,11 @@ baplevel = 0.8 # CK
             # auxin, sugar, gr24, bap
 bapconditions = [(2.5, 0.5,  0, baplevel), (2.5, 1, 0, baplevel)]
 bapdurations = [5.6, 2.8]
-bapIlevels = map(I_law, bapdurations)
+bapIlevels = list(map(I_law, bapdurations))
 
 gr24level = 10 # SL
 gr24conditions = [(1, 0.5, gr24level, 0), (1, 1, gr24level, 0)]
 gr24durations = [15, 4]
-gr24Ilevels = map(I_law, gr24durations) 
+gr24Ilevels = list(map(I_law, gr24durations)) 
+
 

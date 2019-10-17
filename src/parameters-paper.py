@@ -29,3 +29,7 @@ def I():
       d3  = 0.987995826276, 0, 0.99      # delta3
 
 
+@defaultparameters
+def AIA():
+    aiaslope     = 1, 0, 1000
+    aiaintercept = 0, -1000,1000

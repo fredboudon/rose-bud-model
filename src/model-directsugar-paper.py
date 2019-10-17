@@ -2,7 +2,7 @@
 
 # The optimizable parameters are defined in this file
 paramfile = 'parameters-directsugar-paper.py'
-execfile(paramfile, globals(),locals())
+exec(open(paramfile).read(), globals(),locals())
 
 from math import *
 
