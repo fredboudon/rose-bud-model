@@ -4,7 +4,7 @@ from defaultparameters import *
 
 @defaultparameters
 def CK():
-    aiaslope     = -215.67612270896197, -1000, 1000
-    aiaintercept = 323.4664545717228, -1000,1000
-    ckslope    = -1.1832207666790122, -1000, 1000
-    ckintercept    = 0.714011815892329, -1000, 1000
+    aiaslope     = 0.019124308011997004, 0, 1000
+    aiaintercept = -1.061788165497787, -1000,1000
+    ckslope    = 0.0001365800967321439, 0, 1000
+    ckintercept    = 0.4933334133411975, -1000, 1000

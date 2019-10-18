@@ -6,7 +6,7 @@ rml.set_model('model-anne.py')
 
 ######  CK #########
 
-def optimize_AIA(generate = True, randomseedenabled = False, seeds = 1000, view = True):
+def optimize_AIA(generate = True, randomseedenabled = False, seeds = 100, view = True):
     optimize_group(generate, 'CK', CKAconditions, CkAtargets, randomseedenabled, seeds, view = view)
 	
 
