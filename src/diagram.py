@@ -114,7 +114,7 @@ Zero4None = lambda x : x if not x is None else 0
 
 def generate_fig_compounds(paramset = ['SL','CK', 'CKRESPONSE', 'SLRESPONSE', 'I','burst'], 
                        auxincontents = [0.,1.,2.5], sugarcontents = [0.1, 0.5, 1. , 2.5], 
-                       legendpos = (2, 1), 
+                       legendpos = (1, 1), 
                        func = {'burst' : lambda res : Zero4None(burst_delay_law(res['I']))}, 
                        title = {'burst' : 'T', 'CKRESPONSE' : 'CK response', 'SLRESPONSE' : 'SL response'} , 
                        targets = {'SL' : tg.sltargets, 
@@ -177,7 +177,7 @@ def generate_fig_compounds(paramset = ['SL','CK', 'CKRESPONSE', 'SLRESPONSE', 'I
     elif nbrow * nbcol  < nbparam: nbrow += 1
 
     #plt.close('all')
-    fig, axes = plt.subplots(int(nbrow), int(nbcol))
+    fig, axes = plt.subplots(int(nbrow), int(nbcol), figsize=(12,12))
     for iparam, pname in enumerate(paramset):
         # ax = plt.subplot(nbrow, nbcol,iparam+1)
         irow = int(iparam//nbcol)
@@ -223,11 +223,6 @@ def generate_fig_compounds(paramset = ['SL','CK', 'CKRESPONSE', 'SLRESPONSE', 'I
         ax.set_xticklabels( ['Manitol' if sugar == 0 else str(sugar*100)+' mM' for sugar in sugarcontents] )
 
     plt.legend( rects, [str(aux)+' $\mu$M NAA' for aux in auxincontents] ,bbox_to_anchor=legendpos)
-    mngr = plt.get_current_fig_manager()
-    try:
-        mngr.window.setGeometry(1000,100,800,800)
-    except:
-        pass
     plt.show()
 
 
