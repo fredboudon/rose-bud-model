@@ -1,6 +1,13 @@
 The rose bud burst model
 ========================
 
+A model of bud outgrowth response to sugar and hormone levels in its vicinity
+
+AUTHORS:
+-------------
+
+Boudon F, Bertheloot J, Godin C.
+
 REQUIREMENTS:
 -------------
 This model is written in python 2.7 and uses recents versions of scipy, numpy et matplotlib.
